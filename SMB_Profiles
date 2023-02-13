@@ -1,0 +1,107 @@
+"""
+Python script for extracting ensemble surface mass balance along Antarctic grounding line as profiles.
+@author: jennifer.arthur@npolar.no
+"""
+
+import numpy as np
+import os
+import rasterio
+from rasterio.crs import CRS
+import rioxarray as rio
+import pyproj
+import geopandas as gpd
+import shapely.geometry
+from shapely.geometry import mapping
+import matplotlib.pyplot as plt
+from rasterio.plot import show
+
+path=''
+os.chdir(path)
+
+#Load shapefile along which profile will be extracted.
+GL_2km_points_1 = ('')
+GL_2km_points_2 = ('')
+GL_2km_points_3 = ('')
+groundinglinepoints1 = gpd.read_file(GL_2km_points_1)
+groundinglinepoints2 = gpd.read_file(GL_2km_points_2)
+groundinglinepoints3 = gpd.read_file(GL_2km_points_3)
+
+pts1 = groundinglinepoints1[['Easting', 'Northing']]
+pts1.index = range(len(pts1))
+coords = [(x,y) for x, y in zip(pts1.Easting, pts1.Northing)]
+groundinglinepoints1_km = groundinglinepoints1['Dist']/1000
+
+# pts2 = groundinglinepoints2[['Easting', 'Northing']]
+# pts2.index = range(len(pts2))
+# coords = [(x,y) for x, y in zip(pts2.Easting, pts2.Northing)]
+# groundinglinepoints2_km = groundinglinepoints2['Dist']/1000
+
+# pts3 = groundinglinepoints3[['Easting', 'Northing']]
+# pts3.index = range(len(pts3))
+# coords = [(x,y) for x, y in zip(pts3.Easting, pts3.Northing)]
+# groundinglinepoints3_km = groundinglinepoints3['Dist']/1000
+
+# Load geotiff
+SMB_std = rasterio.open('')
+SMB_mean = rasterio.open('')
+
+# Sample the raster at every point location and store values in DataFrame
+groundinglinepoints1['value'] = [x for x in SMB_mean.sample(coords)]
+groundinglinepoints1['stdev'] = [x for x in SMB_std.sample(coords)]
+# groundinglinepoints2['value2'] = [x for x in SMB_mean.sample(coords)]
+# groundinglinepoints2['stdev2'] = [x for x in SMB_std.sample(coords)]
+# groundinglinepoints3['value3'] = [x for x in SMB_mean.sample(coords)]
+# groundinglinepoints3['stdev3'] = [x for x in SMB_std.sample(coords)]
+
+#Create copies of SMB variable to plot +ve SMB as blue and -ve SMB as red
+pos_SMB = groundinglinepoints1['value'].copy()
+neg_SMB = groundinglinepoints1['value'].copy()
+pos_SMB[pos_SMB <= 0] = np.nan
+neg_SMB[neg_SMB > 0] = np.nan
+
+pos_SMB2 = groundinglinepoints1['stdev'].copy()
+neg_SMB2 = groundinglinepoints1['stdev'].copy()
+pos_SMB2[pos_SMB2 <= 0] = np.nan
+neg_SMB2[neg_SMB2 > 0] = np.nan
+
+# pos_SMB = groundinglinepoints2['value2'].copy()
+# neg_SMB = groundinglinepoints2['value2'].copy()
+# pos_SMB[pos_SMB <= 0] = np.nan
+# neg_SMB[neg_SMB > 0] = np.nan
+
+# pos_SMB2 = groundinglinepoints2['stdev2'].copy()
+# neg_SMB2 = groundinglinepoints2['stdev2'].copy()
+# pos_SMB2[pos_SMB2 <= 0] = np.nan
+# neg_SMB2[neg_SMB2 > 0] = np.nan
+
+# pos_SMB = groundinglinepoints3['value3'].copy()
+# neg_SMB = groundinglinepoints3['value3'].copy()
+# pos_SMB[pos_SMB <= 0] = np.nan
+# neg_SMB[neg_SMB > 0] = np.nan
+
+# pos_SMB2 = groundinglinepoints3['stdev3'].copy()
+# neg_SMB2 = groundinglinepoints3['stdev3'].copy()
+# pos_SMB2[pos_SMB2 <= 0] = np.nan
+# neg_SMB2[neg_SMB2 > 0] = np.nan
+
+
+# Plot SMB along grounding line
+plt.figure(figsize=(13,5))
+#plt.plot(groundinglinepoints['Dist'],groundinglinepoints['value'])
+plt.plot(groundinglinepoints1_km,pos_SMB, color='b', linewidth=0.7, label="Ensemble mean SMB")
+plt.plot(groundinglinepoints1_km,neg_SMB, color='r', linewidth=0.7)
+plt.plot(groundinglinepoints1_km,pos_SMB2, color='c', linewidth=0.7, label="Ensemble SMB $\sigma$")
+plt.plot(groundinglinepoints1_km,neg_SMB2, color='c', linewidth=0.7)
+plt.axhline(y=0, color='k', linestyle='--', dashes=(5, 5), linewidth=0.8)
+plt.title("Ensemble mean surface mass balance 1987-2015 along Antarctic grounding line", weight='bold')
+plt.xlabel("Distance along grounding line (km)")
+plt.ylabel("Surface mass balance (mm w.e yr)")
+plt.grid()
+plt.legend(loc="upper left")
+plt.xlim([0, 9846])
+plt.ylim([0, 9846])
+#plt.xlim([8900, 23300])
+#plt.xlim([25200, 48400])
+#plt.savefig('EnsembleMean_profile_Section1_new.png', dpi=300)
+plt.show()
+#plt.close
